@@ -76,58 +76,73 @@ function update() {
     output_display.textContent = display_text.join("");
 }
 
-
-
 function add() {}
 
 // inputs
 function input_number(input) {
-    console.log(input)
-    let true_input = 0
+    console.log(input);
+    let true_input = 0;
     switch (input) {
         case "one":
-            true_input = 1
-            break
+            true_input = 1;
+            break;
         case "two":
-            true_input = 2
-            break
+            true_input = 2;
+            break;
         case "three":
-            true_input = 3
-            break
+            true_input = 3;
+            break;
         case "four":
-            true_input = 4
-            break
+            true_input = 4;
+            break;
         case "five":
-            true_input = 5
-            break
+            true_input = 5;
+            break;
         case "six":
-            true_input = 6
-            break
+            true_input = 6;
+            break;
         case "seven":
-            true_input = 7
-            break
+            true_input = 7;
+            break;
         case "eight":
-            true_input = 8
-            break
+            true_input = 8;
+            break;
         case "nine":
-            true_input = 9
-            break
+            true_input = 9;
+            break;
         case "zero":
-            true_input = 0
-            break
+            true_input = 0;
+            break;
     };
 
     if (Number.isFinite(equation.at(-1))) {
-        true_input = Number("" + equation.at(-1) + true_input)
-        equation.pop(-1)
+        true_input = Number("" + equation.at(-1) + true_input);
+        equation.pop(-1);
     };
-    equation.push(true_input)
+    equation.push(true_input);
+};
+function input_operator(input) {
+    if (typeof equation.at(-1) === "string") {
+        equation.pop(-1);
+    };
+
+    switch (input) {
+        case "multiply":
+            equation.push("M");
+            break;
+        case "divide":
+            equation.push("D");
+            break;
+        case "add":
+            equation.push("A");
+            break;
+        case "subtract":
+            equation.push("S");
+            break;
+    };
 };
 function input_modifier(input) {
     console.log("modifier")
-};
-function input_operator(input) {
-    console.log("operator")
 };
 function input_memory(input) {
     switch (input) {
@@ -138,18 +153,20 @@ function input_memory(input) {
 
 function input_filter(input) {
     const number = ["one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "zero"];
+    const operator = ["multiply", "divide", "add", "subtract"];
     const modifier = ["parenthesis", "exponent", "neg", "decimal"];
-    const operator = ["divide", "multiply", "subtract", "add", "equals"];
     const memory = ["history", "clear", "backspace"];
 
     if (number.includes(input.target.id)) {
         input_number(input.target.id);
-    } else if (modifier.includes(input.target.id)) {
-        input_modifier(input.target.id);
     } else if (operator.includes(input.target.id)) {
         input_operator(input.target.id);
+    } else if (modifier.includes(input.target.id)) {
+        input_modifier(input.target.id);
     } else if (memory.includes(input.target.id)) {
         input_memory(input.target.id);
+    } else if (input.target.id === "equals") {
+        // solve
     } else {
         console.log("how tf")
     };
