@@ -19,6 +19,11 @@ body {
     margin: 0px;
 }
 
+#log {
+    color: red;
+    font-size: 30px;
+}
+
 #calc-body {
     display: flex;
     width: 800px;

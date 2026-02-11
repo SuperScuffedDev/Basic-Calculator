@@ -1,5 +1,6 @@
 const buttons = document.querySelectorAll("button");
-const output_display = document.querySelector("#output div")
+const output_display = document.querySelector("#output div");
+const log_msg = document.querySelector("#log");
 
 // (1*6+5) + (13 / 14 - (123 / 6^5)) 
 // let equation = {
@@ -28,11 +29,10 @@ const output_display = document.querySelector("#output div")
 //     }
 // };
 
-let equation = [
-    [1, "M", 6, "A", 5], "A", [13, "D", 14, "S", [123, "D", [6, "E", 5]]]
-];
+let equation = [];
 
 function update() {
+    console.log(equation)
 
     let display_text = [];
     function recurse(array) {
@@ -68,19 +68,29 @@ function update() {
     };
     
     recurse(equation);
-    console.log(equation)
-    console.log(display_text);
     if (display_text.length === 0) {
         display_text.push("0");
     };
     output_display.textContent = display_text.join("");
 }
 
-function add() {}
-
+let current_step = 0;
+let last_type = ""
 // inputs
+
+function find_array_by_step() {
+    let step = equation;
+    for (i=0; i < current_step; i++) {
+        console.log(step[step.length - 1])
+        if (Array.isArray(step[step.length - 1])) {
+            step = step[step.length - 1];
+        };
+    };
+    return step;
+}
+
 function input_number(input) {
-    console.log(input);
+    let step = find_array_by_step();
     let true_input = 0;
     switch (input) {
         case "one":
@@ -115,47 +125,173 @@ function input_number(input) {
             break;
     };
 
-    if (Number.isFinite(equation.at(-1))) {
-        true_input = Number("" + equation.at(-1) + true_input);
-        equation.pop(-1);
+    if (Number.isFinite(step.at(-1))) {
+        true_input = Number("" + step.at(-1) + true_input);
+        step.pop(-1);
     };
-    equation.push(true_input);
+    step.push(true_input);
+    log_msg.textContent = `Input: ${true_input}`
 };
 function input_operator(input) {
-    if (typeof equation.at(-1) === "string") {
-        equation.pop(-1);
+    let step = find_array_by_step();
+
+    if (typeof step.at(-1) === "string") {
+        step.pop(-1);
     };
 
-    switch (input) {
-        case "multiply":
-            equation.push("M");
-            break;
-        case "divide":
-            equation.push("D");
-            break;
-        case "add":
-            equation.push("A");
-            break;
-        case "subtract":
-            equation.push("S");
-            break;
-    };
+    if (typeof step.at(-1) === "number" || typeof step.at(-1) === "object") {
+        switch (input) {
+            case "multiply":
+                step.push("M");
+                log_msg.textContent = `Input: Multiply`
+                break;
+            case "divide":
+                step.push("D");
+                log_msg.textContent = `Input: Divide`
+                break;
+            case "add":
+                step.push("A");
+                log_msg.textContent = `Input: Add`
+                break;
+            case "subtract":
+                step.push("S");
+                log_msg.textContent = `Input: Subtract`
+                break;
+        };
+    }
 };
 function input_modifier(input) {
-    console.log("modifier")
-};
-function input_memory(input) {
+    let step = find_array_by_step();
     switch (input) {
-        case "clear":
-            equation = []
+        case "parenthesis":
+            if (typeof step.at(-1) === "number" || typeof step.at(-1) === "object") {
+                step.push("M");
+            };
+            if (step.length === 0 && current_step !== 0) {
+                break;
+            } else {
+                step.push([]);
+                current_step += 1
+                log_msg.textContent = `Input: Step`
+            };
+            break;
+        case "exponent":
+            equation.push("E");
+                log_msg.textContent = `Input: Power`
+            break;
+        case "neg":
+            break;
+        case "decimal":
+            break;
     };
 };
+function input_memory(input) {
+    let step = find_array_by_step();
+    switch (input) {
+        case "pop":
+            if (current_step > 0) {
+                if (step.length === 0) {
+                    equation.pop(step);
+                    log_msg.textContent = `Input: incomplete step removed.`
+
+                } else {
+                    log_msg.textContent = `Input: Unstep`
+                }
+                current_step -= 1
+            } else {
+                log_msg.textContent = `ERROR: nothing to step out of.`
+            }
+            break;
+        case "clear":
+            equation = [];
+            break;
+    };
+};
+
+function solve() {
+    let current_equation = equation;
+    let deepest_array = []
+
+    function power(a, b) {
+        return a ** b
+    }
+    function multiply(a, b) {
+        return a * b;
+    }
+    function divide(a, b) {
+        return a / b;
+    }
+    function add(a, b) {
+        return a + b;
+    }
+    function subtract(a, b) {
+        return a - b;
+    }
+
+    function recurse_solve_deepest(array) {
+        //locate the deepest(first step)
+        array.forEach(value => {
+            if (Array.isArray(value)) {
+                recurse_solve_deepest(value);
+                let new_value = value[1];
+                value = new_value;
+            };
+        });
+
+        //find exponent
+        while (array.includes("E")) {
+            let index_of_operator = array.indexOf("E");
+            let new_value = power(array[index_of_operator - 1], array[index_of_operator + 1]);
+            array[index_of_operator] = new_value;
+            array.splice(index_of_operator + 1, 1);
+            array.splice(index_of_operator - 1, 1);
+        };
+
+        //find multiply
+        while (array.includes("M")) {
+            let index_of_operator = array.indexOf("M");
+            let new_value = multiply(array[index_of_operator - 1], array[index_of_operator + 1]);
+            array[index_of_operator] = new_value;
+            array.splice(index_of_operator + 1, 1);
+            array.splice(index_of_operator - 1, 1);
+        };
+
+        //find divide
+        while (array.includes("D")) {
+            let index_of_operator = array.indexOf("D");
+            let new_value = divide(array[index_of_operator - 1], array[index_of_operator + 1]);
+            array[index_of_operator] = new_value;
+            array.splice(index_of_operator + 1, 1);
+            array.splice(index_of_operator - 1, 1);
+        };
+
+        //find add
+        while (array.includes("A")) {
+            let index_of_operator = array.indexOf("A");
+            let new_value = add(array[index_of_operator - 1], array[index_of_operator + 1]);
+            array[index_of_operator] = new_value;
+            array.splice(index_of_operator + 1, 1);
+            array.splice(index_of_operator - 1, 1);
+        };
+
+        //find subtract
+        while (array.includes("S")) {
+            let index_of_operator = array.indexOf("S");
+            let new_value = subtract(array[index_of_operator - 1], array[index_of_operator + 1]);
+            array[index_of_operator] = new_value;
+            array.splice(index_of_operator + 1, 1);
+            array.splice(index_of_operator - 1, 1);
+        };
+    };
+
+    recurse_solve_deepest(current_equation);
+}
 
 function input_filter(input) {
     const number = ["one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "zero"];
     const operator = ["multiply", "divide", "add", "subtract"];
     const modifier = ["parenthesis", "exponent", "neg", "decimal"];
-    const memory = ["history", "clear", "backspace"];
+    const memory = ["pop", "clear", "backspace"];
 
     if (number.includes(input.target.id)) {
         input_number(input.target.id);
@@ -166,7 +302,7 @@ function input_filter(input) {
     } else if (memory.includes(input.target.id)) {
         input_memory(input.target.id);
     } else if (input.target.id === "equals") {
-        // solve
+        solve()
     } else {
         console.log("how tf")
     };
