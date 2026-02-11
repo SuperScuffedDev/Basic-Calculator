@@ -118,6 +118,10 @@ function input_operator(input) {
 
     if (typeof step.at(-1) === "number" || typeof step.at(-1) === "object") {
         switch (input) {
+            case "exponent":
+                equation.push("E");
+                    log_msg.textContent = `Input: Power`
+                break;
             case "multiply":
                 step.push("M");
                 log_msg.textContent = `Input: Multiply`
@@ -152,13 +156,11 @@ function input_modifier(input) {
                 log_msg.textContent = `Input: Step`
             };
             break;
-        case "exponent":
-            equation.push("E");
-                log_msg.textContent = `Input: Power`
-            break;
         case "neg":
+            log_msg.textContent = `ERROR: I was lazy(will do later)`
             break;
         case "decimal":
+            log_msg.textContent = `ERROR: I was lazy(will do later)`
             break;
     };
 };
@@ -273,8 +275,8 @@ function solve() {
 
 function input_filter(input) {
     const number = ["one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "zero"];
-    const operator = ["multiply", "divide", "add", "subtract"];
-    const modifier = ["parenthesis", "exponent", "neg", "decimal"];
+    const operator = ["exponent", "multiply", "divide", "add", "subtract"];
+    const modifier = ["parenthesis", "neg", "decimal"];
     const memory = ["pop", "clear", "backspace"];
 
     if (number.includes(input.target.id)) {
