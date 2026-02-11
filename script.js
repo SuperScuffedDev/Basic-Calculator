@@ -3,37 +3,12 @@ const output_display = document.querySelector("#output div");
 const log_msg = document.querySelector("#log");
 
 // (1*6+5) + (13 / 14 - (123 / 6^5)) 
-// let equation = {
-//     value_1: {
-//         value_1: 1,
-//         operator_1: "M",
-//         value_2: 6,
-//         operator_2: "A",
-//         value_3: 5
-//     },
-//     operator_2: "A",
-//     value_2: {
-//         value_1: 13,
-//         operator_1: "D",
-//         value_2: 14,
-//         operator_2: "S",
-//         value_3: {
-//             value_1: 123,
-//             operator_1: "D",
-//             value_2: {
-//                 value_1: 6,
-//                 operator_1: "E",
-//                 value_2: 5
-//             }
-//         }
-//     }
-// };
 
 let equation = [];
+let current_step = 0;
 
 function update() {
-    console.log(equation)
-
+    console.log(current_step)
     let display_text = [];
     function recurse(array) {
         array.forEach(value => {
@@ -74,14 +49,11 @@ function update() {
     output_display.textContent = display_text.join("");
 }
 
-let current_step = 0;
-let last_type = ""
 // inputs
 
-function find_array_by_step() {
+function find_array_by_step(arg_step) {
     let step = equation;
-    for (i=0; i < current_step; i++) {
-        console.log(step[step.length - 1])
+    for (i=0; i < arg_step; i++) {
         if (Array.isArray(step[step.length - 1])) {
             step = step[step.length - 1];
         };
@@ -90,7 +62,7 @@ function find_array_by_step() {
 }
 
 function input_number(input) {
-    let step = find_array_by_step();
+    let step = find_array_by_step(current_step);
     let true_input = 0;
     switch (input) {
         case "one":
@@ -125,6 +97,10 @@ function input_number(input) {
             break;
     };
 
+    if (typeof step.at(-1) === "object") {
+        step.push("M");
+    };
+
     if (Number.isFinite(step.at(-1))) {
         true_input = Number("" + step.at(-1) + true_input);
         step.pop(-1);
@@ -132,8 +108,9 @@ function input_number(input) {
     step.push(true_input);
     log_msg.textContent = `Input: ${true_input}`
 };
+
 function input_operator(input) {
-    let step = find_array_by_step();
+    let step = find_array_by_step(current_step);
 
     if (typeof step.at(-1) === "string") {
         step.pop(-1);
@@ -161,15 +138,15 @@ function input_operator(input) {
     }
 };
 function input_modifier(input) {
-    let step = find_array_by_step();
+    let step = find_array_by_step(current_step);
     switch (input) {
         case "parenthesis":
             if (typeof step.at(-1) === "number" || typeof step.at(-1) === "object") {
                 step.push("M");
-            };
-            if (step.length === 0 && current_step !== 0) {
-                break;
-            } else {
+                step.push([]);
+                current_step += 1
+                log_msg.textContent = `Input: Step`
+            } else if (equation.length === 0) {
                 step.push([]);
                 current_step += 1
                 log_msg.textContent = `Input: Step`
@@ -186,31 +163,35 @@ function input_modifier(input) {
     };
 };
 function input_memory(input) {
-    let step = find_array_by_step();
+    let step = find_array_by_step(current_step);
     switch (input) {
         case "pop":
             if (current_step > 0) {
-                if (step.length === 0) {
-                    equation.pop(step);
-                    log_msg.textContent = `Input: incomplete step removed.`
-
-                } else {
+                if (step.length % 2 === 0 && step.length > 1) {
+                    step.pop()
+                    current_step -= 1
                     log_msg.textContent = `Input: Unstep`
-                }
-                current_step -= 1
+                } else if (step.length === 0) {
+                    let parent_step = find_array_by_step(current_step - 1)
+                    parent_step.splice(parent_step.indexOf(step))
+                    log_msg.textContent = `Input: Unstep, removed empty step`
+                } else {
+                    current_step -= 1
+                    log_msg.textContent = `Input: Unstep`
+                };
             } else {
                 log_msg.textContent = `ERROR: nothing to step out of.`
-            }
+            };
             break;
         case "clear":
             equation = [];
             break;
+        case "backspace":
+            log_msg.textContent = `ERROR: I was lazy(will do later)`
     };
 };
 
 function solve() {
-    let current_equation = equation;
-    let deepest_array = []
 
     function power(a, b) {
         return a ** b
@@ -230,11 +211,11 @@ function solve() {
 
     function recurse_solve_deepest(array) {
         //locate the deepest(first step)
-        array.forEach(value => {
+        array.forEach((value, index) => {
             if (Array.isArray(value)) {
                 recurse_solve_deepest(value);
-                let new_value = value[1];
-                value = new_value;
+                let new_value = value[0];
+                array[index] = new_value;
             };
         });
 
@@ -268,6 +249,7 @@ function solve() {
         //find add
         while (array.includes("A")) {
             let index_of_operator = array.indexOf("A");
+            console.table(array)
             let new_value = add(array[index_of_operator - 1], array[index_of_operator + 1]);
             array[index_of_operator] = new_value;
             array.splice(index_of_operator + 1, 1);
@@ -282,9 +264,11 @@ function solve() {
             array.splice(index_of_operator + 1, 1);
             array.splice(index_of_operator - 1, 1);
         };
+
+        console.table(array)
     };
 
-    recurse_solve_deepest(current_equation);
+    recurse_solve_deepest(equation);
 }
 
 function input_filter(input) {
